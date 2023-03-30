@@ -913,7 +913,8 @@ namespace MediaBrowser.Providers.Manager
             catch (Exception ex)
             {
                 // EventHandlers should never propagate exceptions, but we have little control over plugins...
-                _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshStarted));
+                if (ex is not MissingMethodException)
+                    _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshStarted));
             }
         }
 
@@ -930,7 +931,8 @@ namespace MediaBrowser.Providers.Manager
             catch (Exception ex)
             {
                 // EventHandlers should never propagate exceptions, but we have little control over plugins...
-                _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshCompleted));
+                if (ex is not MissingMethodException)
+                    _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshCompleted));
             }
         }
 
@@ -969,7 +971,8 @@ namespace MediaBrowser.Providers.Manager
             catch (Exception ex)
             {
                 // EventHandlers should never propagate exceptions, but we have little control over plugins...
-                _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshProgress));
+                if (ex is not MissingMethodException)
+                    _logger.LogError(ex, "Invoking {RefreshEvent} event handlers failed", nameof(RefreshProgress));
             }
         }
 

@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Controller.Sorting;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using TMDbLib.Objects.Find;
@@ -352,7 +353,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     var personInfo = new PersonInfo
                     {
                         Name = actor.Name.Trim(),
-                        Role = actor.Character,
+                        Role = actor.Character.Trim(),
                         Type = PersonKind.Actor,
                         SortOrder = actor.Order,
                         ImageUrl = _tmdbClientManager.GetPosterUrl(actor.ProfilePath)
@@ -390,7 +391,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     yield return new PersonInfo
                     {
                         Name = person.Name.Trim(),
-                        Role = person.Job,
+                        Role = person.Job.Trimmed(),
                         Type = type
                     };
                 }

@@ -364,7 +364,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                             continue;
                         }
 
-                        item.AddStudio(name);
+                        item.AddStudio(name.Trim());
                     }
 
                     break;
@@ -449,7 +449,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                     if (!string.IsNullOrWhiteSpace(val))
                     {
-                        item.AddTrailerUrl(val);
+                        item.AddTrailerUrl(val.Trim());
                     }
 
                     break;
@@ -463,7 +463,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     {
                         if (!string.IsNullOrWhiteSpace(val))
                         {
-                            hasDisplayOrder.DisplayOrder = val;
+                            hasDisplayOrder.DisplayOrder = val.Trim();
                         }
                     }
 
@@ -814,7 +814,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                             if (!string.IsNullOrWhiteSpace(val))
                             {
-                                item.Tagline = val;
+                                item.Tagline = val.Trim();
                             }
 
                             break;
@@ -893,7 +893,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                             if (!string.IsNullOrWhiteSpace(tag))
                             {
-                                tags.Add(tag);
+                                tags.Add(tag.Trim());
                             }
 
                             break;
@@ -985,7 +985,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                             if (!string.IsNullOrWhiteSpace(val))
                             {
-                                item.AddTrailerUrl(val);
+                                item.AddTrailerUrl(val.Trim());
                             }
 
                             break;
@@ -1116,7 +1116,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                 }
             }
 
-            var personInfo = new PersonInfo { Name = name.Trim(), Role = role, Type = type, SortOrder = sortOrder };
+            var personInfo = new PersonInfo { Name = name.Trim(), Role = role.Trim(), Type = type, SortOrder = sortOrder };
 
             return new[] { personInfo };
         }

@@ -11,6 +11,7 @@ using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Controller.Sorting;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 
@@ -168,7 +169,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     metadataResult.AddPerson(new PersonInfo
                     {
                         Name = actor.Name.Trim(),
-                        Role = actor.Character,
+                        Role = actor.Character.Trim(),
                         Type = PersonKind.Actor,
                         SortOrder = actor.Order
                     });
@@ -182,7 +183,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     metadataResult.AddPerson(new PersonInfo
                     {
                         Name = guest.Name.Trim(),
-                        Role = guest.Character,
+                        Role = guest.Character.Trim(),
                         Type = PersonKind.GuestStar,
                         SortOrder = guest.Order
                     });
@@ -206,7 +207,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     metadataResult.AddPerson(new PersonInfo
                     {
                         Name = person.Name.Trim(),
-                        Role = person.Job,
+                        Role = person.Job.Trimmed(),
                         Type = type
                     });
                 }

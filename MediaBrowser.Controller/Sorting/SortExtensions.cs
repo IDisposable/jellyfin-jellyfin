@@ -30,5 +30,15 @@ namespace MediaBrowser.Controller.Sorting
         {
             return list.ThenByDescending(getName, _comparer);
         }
+
+        public static string Trimmed(this string? value)
+        {
+            return (value ?? String.Empty).Trim();
+        }
+
+        public static IEnumerable<string> Trimmed(this IEnumerable<string> values)
+        {
+            return values.Select(i => (i ?? String.Empty).Trim());
+        }
     }
 }
