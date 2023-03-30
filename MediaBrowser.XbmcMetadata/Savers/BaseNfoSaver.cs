@@ -788,7 +788,10 @@ namespace MediaBrowser.XbmcMetadata.Savers
 
             AddUserData(item, writer, userManager, userDataRepo, options);
 
-            AddActors(people, writer, libraryManager, options.SaveImagePathsInNfo);
+            if (item is not MusicAlbum && item is not MusicArtist)
+            {
+                AddActors(people, writer, libraryManager, options.SaveImagePathsInNfo);
+            }
 
             if (item is BoxSet folder)
             {
