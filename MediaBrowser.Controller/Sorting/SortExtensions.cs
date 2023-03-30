@@ -33,12 +33,12 @@ namespace MediaBrowser.Controller.Sorting
 
         public static string Trimmed(this string? value)
         {
-            return (value ?? String.Empty).Trim();
+            return (value ?? string.Empty).Trim();
         }
 
         public static IEnumerable<string> Trimmed(this IEnumerable<string> values)
         {
-            return values.Select(i => (i ?? String.Empty).Trim());
+            return values.Select(i => (i ?? string.Empty).Trim());
         }
     }
 }
