@@ -74,11 +74,16 @@ namespace MediaBrowser.XbmcMetadata.Savers
             foreach (var track in tracks
                 .OrderBy(i => i.ParentIndexNumber ?? 0)
                 .ThenBy(i => i.IndexNumber ?? 0)
-                .ThenBy(i => (i.Name ?? "").Trimmed()))
+                .ThenBy(i => i.Name.Trimmed()))
             {
                 writer.WriteStartElement("track");
 
-                if (track.IndexNumber.HasValue)
+                if (track.ParentIndexNumber.HasValue && track.ParentIndexNumber.Value != 0)
+                {
+                    writer.WriteElementString("disc", track.ParentIndexNumber.Value.ToString(CultureInfo.InvariantCulture));
+                }
+
+                if (track.IndexNumber.HasValue && track.IndexNumber.Value != 0)
                 {
                     writer.WriteElementString("position", track.IndexNumber.Value.ToString(CultureInfo.InvariantCulture));
                 }

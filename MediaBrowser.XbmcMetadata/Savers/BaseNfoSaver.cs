@@ -515,7 +515,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
                 writer.WriteElementString("credits", person);
             }
 
-            foreach (var trailer in item.RemoteTrailers.OrderBy(t => t.Url ?? ""))
+            foreach (var trailer in item.RemoteTrailers.OrderBy(t => t.Url.Trimmed()))
             {
                 writer.WriteElementString("trailer", GetOutputTrailerUrl(trailer.Url));
             }
@@ -801,7 +801,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
             var items = item.LinkedChildren
                 .Where(i => i.Type == LinkedChildType.Manual)
                 .OrderBy(i => i.Path.Trimmed())
-                .ThenBy(i => i.LibraryItemId ?? "")
+                .ThenBy(i => i.LibraryItemId.Trimmed())
                 .ToList();
 
             foreach (var link in items)

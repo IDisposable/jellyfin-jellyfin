@@ -73,8 +73,8 @@ namespace MediaBrowser.XbmcMetadata.Savers
         {
             foreach (var album in albums
                 .OrderBy(album => album.ProductionYear ?? 0)
-                .ThenBy(album => (album.SortName ?? "").Trimmed())
-                .ThenBy(album => (album.Name ?? "").Trimmed()))
+                .ThenBy(album => album.SortName.Trimmed())
+                .ThenBy(album => album.Name.Trimmed()))
             {
                 writer.WriteStartElement("album");
 
