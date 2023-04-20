@@ -488,7 +488,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
 
             var directors = people
                 .Where(i => i.IsType(PersonKind.Director))
-                .Select(i => i.Name.Trimmed())
+                .Select(i => i.Name?.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(i => i)
                 .ToList();
@@ -500,7 +500,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
 
             var writers = people
                 .Where(i => i.IsType(PersonKind.Writer))
-                .Select(i => i.Name.Trimmed())
+                .Select(i => i.Name?.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(i => i)
                 .ToList();
@@ -515,7 +515,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
                 writer.WriteElementString("credits", person);
             }
 
-            foreach (var trailer in item.RemoteTrailers.OrderBy(t => t.Url.Trimmed()))
+            foreach (var trailer in item.RemoteTrailers.OrderBy(t => t.Url?.Trim()))
             {
                 writer.WriteElementString("trailer", GetOutputTrailerUrl(trailer.Url));
             }
@@ -803,8 +803,8 @@ namespace MediaBrowser.XbmcMetadata.Savers
         {
             var items = item.LinkedChildren
                 .Where(i => i.Type == LinkedChildType.Manual)
-                .OrderBy(i => i.Path.Trimmed())
-                .ThenBy(i => i.LibraryItemId.Trimmed())
+                .OrderBy(i => i.Path?.Trim())
+                .ThenBy(i => i.LibraryItemId?.Trim())
                 .ToList();
 
             foreach (var link in items)
@@ -847,7 +847,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
                 writer.WriteElementString("poster", GetImagePathToSave(image, libraryManager));
             }
 
-            foreach (var backdrop in item.GetImages(ImageType.Backdrop).OrderBy(b => b.Path.Trimmed()))
+            foreach (var backdrop in item.GetImages(ImageType.Backdrop).OrderBy(b => b.Path?.Trim()))
             {
                 writer.WriteElementString("fanart", GetImagePathToSave(backdrop, libraryManager));
             }
@@ -923,7 +923,7 @@ namespace MediaBrowser.XbmcMetadata.Savers
         {
             foreach (var person in people
                 .OrderBy(person => person.SortOrder ?? 0)
-                .ThenBy(person => person.Name.Trimmed()))
+                .ThenBy(person => person.Name?.Trim()))
             {
                 if (person.IsType(PersonKind.Director) || person.IsType(PersonKind.Writer))
                 {

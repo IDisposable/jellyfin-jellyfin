@@ -112,7 +112,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                     result.AddPerson(new PersonInfo
                     {
                         Name = person.Name.Trim(),
-                        Role = person.Job.Trimmed(),
+                        Role = person.Job?.Trim(),
                         Type = type
                     });
                 }

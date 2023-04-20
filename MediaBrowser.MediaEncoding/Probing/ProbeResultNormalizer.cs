@@ -582,7 +582,7 @@ namespace MediaBrowser.MediaEncoding.Probing
             return new NameValuePair
             {
                 Name = name,
-                Value = value.Trimmed()
+                Value = value?.Trim()
             };
         }
 

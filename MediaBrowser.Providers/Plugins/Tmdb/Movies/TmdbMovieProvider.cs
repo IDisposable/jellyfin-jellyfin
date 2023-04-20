@@ -294,7 +294,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.Movies
                     var personInfo = new PersonInfo
                     {
                         Name = person.Name.Trim(),
-                        Role = person.Job.Trimmed(),
+                        Role = person.Job?.Trim(),
                         Type = type
                     };
 
