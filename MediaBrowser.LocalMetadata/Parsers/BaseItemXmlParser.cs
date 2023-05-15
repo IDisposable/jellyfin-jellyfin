@@ -258,7 +258,12 @@ namespace MediaBrowser.LocalMetadata.Parsers
                 case "Network":
                     foreach (var name in reader.GetStringArray())
                     {
-                        item.AddStudio(name);
+                        if (string.IsNullOrWhiteSpace(name))
+                        {
+                            continue;
+                        }
+
+                        item.AddStudio(name.Trim());
                     }
 
                     break;
@@ -294,7 +299,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     var trailer = reader.ReadNormalizedString();
                     if (!string.IsNullOrEmpty(trailer))
                     {
-                        item.AddTrailerUrl(trailer);
+                        item.AddTrailerUrl(val.Trim());
                     }
 
                     break;
@@ -302,7 +307,10 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     var displayOrder = reader.ReadNormalizedString();
                     if (!string.IsNullOrEmpty(displayOrder) && item is IHasDisplayOrder hasDisplayOrder)
                     {
-                        hasDisplayOrder.DisplayOrder = displayOrder;
+                        if (!string.IsNullOrWhiteSpace(val))
+                        {
+                            hasDisplayOrder.DisplayOrder = val.Trim();
+                        }
                     }
 
                     break;
@@ -586,7 +594,14 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     switch (reader.Name)
                     {
                         case "Tagline":
-                            item.Tagline = reader.ReadNormalizedString();
+                        {
+                            var val = reader.ReadNormalizedString();
+
+                            if (!string.IsNullOrWhiteSpace(val))
+                            {
+                                item.Tagline = val.Trim();
+                            }
+
                             break;
                         default:
                             reader.Skip();
@@ -655,7 +670,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                             var tag = reader.ReadNormalizedString();
                             if (!string.IsNullOrEmpty(tag))
                             {
-                                tags.Add(tag);
+                                tags.Add(tag.Trim());
                             }
 
                             break;
@@ -727,7 +742,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                             var trailer = reader.ReadNormalizedString();
                             if (!string.IsNullOrEmpty(trailer))
                             {
-                                item.AddTrailerUrl(trailer);
+                                item.AddTrailerUrl(val.Trim());
                             }
 
                             break;
@@ -778,6 +793,83 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     reader.Read();
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the persons from XML node.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <returns>IEnumerable{PersonInfo}.</returns>
+        private IEnumerable<PersonInfo> GetPersonsFromXmlNode(XmlReader reader)
+        {
+            var name = string.Empty;
+            var type = PersonKind.Actor; // If type is not specified assume actor
+            var role = string.Empty;
+            int? sortOrder = null;
+
+            reader.MoveToContent();
+            reader.Read();
+
+            // Loop through each element
+            while (!reader.EOF && reader.ReadState == ReadState.Interactive)
+            {
+                if (reader.NodeType == XmlNodeType.Element)
+                {
+                    switch (reader.Name)
+                    {
+                        case "Name":
+                            name = reader.ReadElementContentAsString();
+                            break;
+
+                        case "Type":
+                        {
+                            var val = reader.ReadElementContentAsString();
+                            _ = Enum.TryParse(val, true, out type);
+
+                            break;
+                        }
+
+                        case "Role":
+                        {
+                            var val = reader.ReadElementContentAsString();
+
+                            if (!string.IsNullOrWhiteSpace(val))
+                            {
+                                role = val;
+                            }
+
+                            break;
+                        }
+
+                        case "SortOrder":
+                        {
+                            var val = reader.ReadElementContentAsString();
+
+                            if (!string.IsNullOrWhiteSpace(val))
+                            {
+                                if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intVal))
+                                {
+                                    sortOrder = intVal;
+                                }
+                            }
+
+                            break;
+                        }
+
+                        default:
+                            reader.Skip();
+                            break;
+                    }
+                }
+                else
+                {
+                    reader.Read();
+                }
+            }
+
+            var personInfo = new PersonInfo { Name = name.Trim(), Role = role.Trim(), Type = type, SortOrder = sortOrder };
+
+            return new[] { personInfo };
         }
 
         /// <summary>
