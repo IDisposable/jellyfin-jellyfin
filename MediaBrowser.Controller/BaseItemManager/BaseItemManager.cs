@@ -34,6 +34,24 @@ namespace MediaBrowser.Controller.BaseItemManager
         /// <inheritdoc />
         public SemaphoreSlim MetadataRefreshThrottler { get; private set; }
 
+// BEGIN HACK
+        /// <inheritdoc />
+        public bool IsMetadataFetcherEnabled(BaseItem baseItem, LibraryOptions libraryOptions, string name)
+        {
+            // just upcall into the by-TypeOptions version using the logic the old path would have used
+            TypeOptions? libraryTypeOptions = libraryOptions?.GetTypeOptions(baseItem.GetType().Name);
+            return this.IsMetadataFetcherEnabled(baseItem, libraryTypeOptions, name);
+        }
+
+        /// <inheritdoc />
+        public bool IsImageFetcherEnabled(BaseItem baseItem, LibraryOptions libraryOptions, string name)
+        {
+            // just upcall into the by-TypeOptions version using the logic the old path would have used
+            TypeOptions? libraryTypeOptions = libraryOptions?.GetTypeOptions(baseItem.GetType().Name);
+            return this.IsImageFetcherEnabled(baseItem, libraryTypeOptions, name);
+        }
+// END HACK
+
         /// <inheritdoc />
         public bool IsMetadataFetcherEnabled(BaseItem baseItem, TypeOptions? libraryTypeOptions, string name)
         {
