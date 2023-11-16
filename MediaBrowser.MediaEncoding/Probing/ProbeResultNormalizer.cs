@@ -530,7 +530,7 @@ namespace MediaBrowser.MediaEncoding.Probing
 
         private void ProcessPairs(string key, List<NameValuePair> pairs, MediaInfo info)
         {
-            IList<BaseItemPerson> peoples = new List<BaseItemPerson>();
+            List<BaseItemPerson> peoples = new List<BaseItemPerson>();
             var distinctValues = pairs.Select(p => p.Value)
                     .Where(i => !string.IsNullOrWhiteSpace(i))
                     .Trimmed()
