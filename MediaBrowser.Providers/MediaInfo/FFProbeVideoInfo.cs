@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Extensions;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Configuration;
@@ -354,7 +355,7 @@ namespace MediaBrowser.Providers.MediaInfo
                 blurayVideoStream.Codec = ffmpegVideoStream.Codec;
                 blurayVideoStream.BitRate = blurayVideoStream.BitRate.GetValueOrDefault() == 0 ? ffmpegVideoStream.BitRate : blurayVideoStream.BitRate;
                 blurayVideoStream.Width = blurayVideoStream.Width.GetValueOrDefault() == 0 ? ffmpegVideoStream.Width : blurayVideoStream.Width;
-                blurayVideoStream.Height = blurayVideoStream.Height.GetValueOrDefault() == 0 ? ffmpegVideoStream.Width : blurayVideoStream.Height;
+                blurayVideoStream.Height = blurayVideoStream.Height.GetValueOrDefault() == 0 ? ffmpegVideoStream.Height : blurayVideoStream.Height;
                 blurayVideoStream.ColorRange = ffmpegVideoStream.ColorRange;
                 blurayVideoStream.ColorSpace = ffmpegVideoStream.ColorSpace;
                 blurayVideoStream.ColorTransfer = ffmpegVideoStream.ColorTransfer;
@@ -400,7 +401,7 @@ namespace MediaBrowser.Providers.MediaInfo
                 {
                     video.Genres = Array.Empty<string>();
 
-                    foreach (var genre in data.Genres)
+                    foreach (var genre in data.Genres.Trimmed())
                     {
                         video.AddGenre(genre);
                     }
@@ -509,9 +510,9 @@ namespace MediaBrowser.Providers.MediaInfo
                 {
                     PeopleHelper.AddPerson(people, new PersonInfo
                     {
-                        Name = person.Name,
+                        Name = person.Name.Trim(),
                         Type = person.Type,
-                        Role = person.Role
+                        Role = person.Role.Trim()
                     });
                 }
 
