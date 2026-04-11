@@ -85,6 +85,7 @@ namespace Emby.Server.Implementations.Library
         private readonly IPeopleRepository _peopleRepository;
         private readonly ExtraResolver _extraResolver;
         private readonly IPathManager _pathManager;
+        private readonly IMediaStreamRepository _mediaStreamRepository;
         private readonly FastConcurrentLru<Guid, BaseItem> _cache;
 
         /// <summary>
@@ -123,6 +124,7 @@ namespace Emby.Server.Implementations.Library
         /// <param name="directoryService">The directory service.</param>
         /// <param name="peopleRepository">The people repository.</param>
         /// <param name="pathManager">The path manager.</param>
+        /// <param name="mediaStreamRepository">The media stream repository.</param>
         public LibraryManager(
             IServerApplicationHost appHost,
             ILoggerFactory loggerFactory,
@@ -140,7 +142,8 @@ namespace Emby.Server.Implementations.Library
             NamingOptions namingOptions,
             IDirectoryService directoryService,
             IPeopleRepository peopleRepository,
-            IPathManager pathManager)
+            IPathManager pathManager,
+            IMediaStreamRepository mediaStreamRepository)
         {
             _appHost = appHost;
             _logger = loggerFactory.CreateLogger<LibraryManager>();
@@ -161,6 +164,7 @@ namespace Emby.Server.Implementations.Library
             _namingOptions = namingOptions;
             _peopleRepository = peopleRepository;
             _pathManager = pathManager;
+            _mediaStreamRepository = mediaStreamRepository;
             _extraResolver = new ExtraResolver(loggerFactory.CreateLogger<ExtraResolver>(), namingOptions, directoryService);
 
             _configurationManager.ConfigurationUpdated += ConfigurationUpdated;
@@ -1280,6 +1284,13 @@ namespace Emby.Server.Implementations.Library
             var existing = GetItemList(new InternalItemsQuery { ExternalProviderId = prefix })
                 .ToDictionary(i => i.ExternalProviderId!, StringComparer.OrdinalIgnoreCase);
 
+            // Cache ExternalProviderId → item.Id so parent linking can resolve without extra DB queries.
+            var idCache = new Dictionary<string, Guid>(existing.Count + items.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, item) in existing)
+            {
+                idCache[key] = item.Id;
+            }
+
             var returnedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var numItems = items.Count;
             var numComplete = 0;
@@ -1293,15 +1304,24 @@ namespace Emby.Server.Implementations.Library
 
                 if (existing.TryGetValue(providerId, out var existingItem))
                 {
-                    ApplyExternalItemInfo(existingItem, info);
+                    ApplyExternalItemInfo(existingItem, info, prefix, idCache);
                     await UpdateItemAsync(existingItem, existingItem.GetParent(), ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+                    if (info.MediaStreams.Count > 0)
+                    {
+                        _mediaStreamRepository.SaveMediaStreams(existingItem.Id, info.MediaStreams, cancellationToken);
+                    }
                 }
                 else
                 {
-                    var newItem = CreateExternalItem(info, providerId);
+                    var newItem = CreateExternalItem(info, providerId, prefix, idCache);
                     if (newItem is not null)
                     {
                         CreateItem(newItem, null);
+                        idCache[providerId] = newItem.Id;
+                        if (info.MediaStreams.Count > 0)
+                        {
+                            _mediaStreamRepository.SaveMediaStreams(newItem.Id, info.MediaStreams, cancellationToken);
+                        }
                     }
                 }
 
@@ -1333,7 +1353,7 @@ namespace Emby.Server.Implementations.Library
             return null;
         }
 
-        private BaseItem? CreateExternalItem(ExternalItemInfo info, string providerId)
+        private BaseItem? CreateExternalItem(ExternalItemInfo info, string providerId, string prefix, Dictionary<string, Guid> idCache)
         {
             BaseItem? item = info.ItemKind switch
             {
@@ -1354,46 +1374,120 @@ namespace Emby.Server.Implementations.Library
 
             item.Id = GetNewItemId(providerId, item.GetType());
             item.ExternalProviderId = providerId;
+            item.ExternalId = info.ExternalId;
             item.DateCreated = DateTime.UtcNow;
-            ApplyExternalItemInfo(item, info);
+            ApplyExternalItemInfo(item, info, prefix, idCache);
             return item;
         }
 
-        private static void ApplyExternalItemInfo(BaseItem item, ExternalItemInfo info)
+        private void ApplyExternalItemInfo(BaseItem item, ExternalItemInfo info, string prefix, Dictionary<string, Guid> idCache)
         {
             item.Name = info.Name;
             item.Overview = info.Overview;
             item.OfficialRating = info.OfficialRating;
             item.ProductionYear = info.ProductionYear;
             item.RunTimeTicks = info.RunTimeTicks;
+            item.PremiereDate = info.PremiereDate;
+            item.EndDate = info.EndDate;
+            item.CommunityRating = info.CommunityRating;
+            item.CriticRating = info.CriticRating;
+            item.Tagline = info.Tagline;
             item.Genres = info.Genres.ToArray();
+            item.Tags = info.Tags.ToArray();
+            item.Studios = info.Studios.ToArray();
+            item.OriginalTitle = info.OriginalTitle;
+            item.HomePageUrl = info.HomePageUrl;
+            item.ProductionLocations = info.ProductionLocations.ToArray();
             item.ProviderIds = new Dictionary<string, string>(info.ProviderIds);
             item.IndexNumber = info.IndexNumber;
             item.ParentIndexNumber = info.ParentIndexNumber;
+            item.Path = info.Path;
+            item.Container = info.Container;
 
-            if (!string.IsNullOrEmpty(info.PrimaryImageUrl))
+            if (item is Series series)
             {
-                item.SetImage(new ItemImageInfo { Path = info.PrimaryImageUrl, Type = ImageType.Primary }, 0);
+                if (!string.IsNullOrEmpty(info.SeriesStatus)
+                    && Enum.TryParse<SeriesStatus>(info.SeriesStatus, ignoreCase: true, out var status))
+                {
+                    series.Status = status;
+                }
+
+                series.DisplayOrder = info.DisplayOrder;
             }
 
+            if (item is Movie movie)
+            {
+                movie.TmdbCollectionName = info.TmdbCollectionName;
+            }
+
+            if (item is Episode ep)
+            {
+                ep.IndexNumberEnd = info.IndexNumberEnd;
+                ep.AirsBeforeSeasonNumber = info.AirsBeforeSeasonNumber;
+                ep.AirsAfterSeasonNumber = info.AirsAfterSeasonNumber;
+                ep.AirsBeforeEpisodeNumber = info.AirsBeforeEpisodeNumber;
+            }
+
+            if (item is IHasArtist hasArtist && info.Artists.Count > 0)
+            {
+                hasArtist.Artists = info.Artists.ToArray();
+            }
+
+            if (item is IHasAlbumArtist hasAlbumArtist && info.AlbumArtists.Count > 0)
+            {
+                hasAlbumArtist.AlbumArtists = info.AlbumArtists.ToArray();
+            }
+
+            if (item is IHasSeries hasSeries && !string.IsNullOrEmpty(info.SeriesExternalId))
+            {
+                var seriesProviderId = prefix + info.SeriesExternalId;
+                if (idCache.TryGetValue(seriesProviderId, out var seriesId))
+                {
+                    hasSeries.SeriesId = seriesId;
+                    hasSeries.SeriesName = GetItemById(seriesId)?.Name;
+                }
+            }
+
+            if (item is Episode episode && !string.IsNullOrEmpty(info.SeasonExternalId))
+            {
+                var seasonProviderId = prefix + info.SeasonExternalId;
+                if (idCache.TryGetValue(seasonProviderId, out var seasonId))
+                {
+                    episode.SeasonId = seasonId;
+                }
+            }
+
+            SetOrClearImage(item, ImageType.Primary, 0, info.PrimaryImageUrl);
+            SetOrClearImage(item, ImageType.Logo, 0, info.LogoImageUrl);
+            SetOrClearImage(item, ImageType.Thumb, 0, info.ThumbImageUrl);
+            SetOrClearImage(item, ImageType.Banner, 0, info.BannerImageUrl);
+
+            // Sync backdrop list: set provided URLs, remove extras.
             for (var i = 0; i < info.BackdropImageUrls.Count; i++)
             {
                 item.SetImage(new ItemImageInfo { Path = info.BackdropImageUrls[i], Type = ImageType.Backdrop }, i);
             }
 
-            if (!string.IsNullOrEmpty(info.LogoImageUrl))
+            var existingBackdrops = item.ImageInfos.Where(i => i.Type == ImageType.Backdrop).ToList();
+            for (var i = existingBackdrops.Count - 1; i >= info.BackdropImageUrls.Count; i--)
             {
-                item.SetImage(new ItemImageInfo { Path = info.LogoImageUrl, Type = ImageType.Logo }, 0);
+                item.RemoveImage(existingBackdrops[i]);
             }
+        }
 
-            if (!string.IsNullOrEmpty(info.ThumbImageUrl))
+        private static void SetOrClearImage(BaseItem item, ImageType type, int index, string? url)
+        {
+            if (!string.IsNullOrEmpty(url))
             {
-                item.SetImage(new ItemImageInfo { Path = info.ThumbImageUrl, Type = ImageType.Thumb }, 0);
+                item.SetImage(new ItemImageInfo { Path = url, Type = type }, index);
             }
-
-            if (!string.IsNullOrEmpty(info.BannerImageUrl))
+            else
             {
-                item.SetImage(new ItemImageInfo { Path = info.BannerImageUrl, Type = ImageType.Banner }, 0);
+                var existing = item.GetImageInfo(type, index);
+                if (existing is not null)
+                {
+                    item.RemoveImage(existing);
+                }
             }
         }
 
