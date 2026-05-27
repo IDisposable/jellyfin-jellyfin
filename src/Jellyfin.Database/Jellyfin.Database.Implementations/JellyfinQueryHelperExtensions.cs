@@ -95,7 +95,7 @@ public static class JellyfinQueryHelperExtensions
         IList<Guid> referenceIds,
         bool invert = false)
     {
-        // Well genre/artist/album etc items do not actually set the ItemValue of thier specitic types so we cannot match it that way.
+        // Well genre/artist/album etc items do not actually set the ItemValue of their specific types so we cannot match it that way.
         /*
         "(guid in (select itemid from ItemValues where CleanValue = (select CleanName from TypedBaseItems where guid=@GenreIds and Type=2)))"
         */
@@ -138,7 +138,7 @@ public static class JellyfinQueryHelperExtensions
 
         var containsMethodInfo = _containsQueryCache.GetOrAdd(typeof(TProperty), static (key) => _containsMethodGenericCache.MakeGenericMethod(key));
 
-        if (oneOf.Count < 4) // arbitrary value choosen.
+        if (oneOf.Count < 4) // arbitrary value chosen.
         {
             // if we have 3 or fewer values to check against its faster to do a IN(const,const,const) lookup
             return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(oneOf), property.Body), parameter);
