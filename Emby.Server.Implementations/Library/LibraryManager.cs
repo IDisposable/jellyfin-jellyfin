@@ -94,7 +94,6 @@ namespace Emby.Server.Implementations.Library
         private readonly IMediaStreamRepository _mediaStreamRepository;
         private readonly FastConcurrentLru<Guid, BaseItem> _cache;
         private readonly DotIgnoreIgnoreRule _dotIgnoreIgnoreRule;
-        private readonly IMediaStreamRepository _mediaStreamRepository;
         private readonly Lazy<IExternalDataManager> _externalDataManagerFactory;
 
         /// <summary>
