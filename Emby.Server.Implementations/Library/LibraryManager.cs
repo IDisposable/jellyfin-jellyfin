@@ -2023,9 +2023,9 @@ namespace Emby.Server.Implementations.Library
             return _countService.GetItemCountsForNameItem(kind, id, relatedItemKinds, query);
         }
 
-        public Dictionary<Guid, int> GetChildCountBatch(IReadOnlyList<Guid> parentIds, Guid? userId)
+        public Dictionary<Guid, int> GetChildCountBatch(IReadOnlyList<Guid> parentIds, User? user)
         {
-            return _countService.GetChildCountBatch(parentIds, userId);
+            return _countService.GetChildCountBatch(parentIds, user);
         }
 
         /// <inheritdoc/>
@@ -4130,7 +4130,9 @@ namespace Emby.Server.Implementations.Library
             }
 
             var rootFolderPath = _configurationManager.ApplicationPaths.DefaultUserViewsPath;
-            var virtualFolderPath = Path.Combine(rootFolderPath, virtualFolderName);
+            var virtualFolderPath = FileSystemHelper.GetChildPath(rootFolderPath, virtualFolderName)
+                ?? throw new FileNotFoundException(
+                    string.Format(CultureInfo.InvariantCulture, "The media collection {0} does not exist", virtualFolderName));
 
             CreateShortcut(virtualFolderPath, pathInfo);
 
@@ -4151,7 +4153,9 @@ namespace Emby.Server.Implementations.Library
             ArgumentNullException.ThrowIfNull(mediaPath);
 
             var rootFolderPath = _configurationManager.ApplicationPaths.DefaultUserViewsPath;
-            var virtualFolderPath = Path.Combine(rootFolderPath, virtualFolderName);
+            var virtualFolderPath = FileSystemHelper.GetChildPath(rootFolderPath, virtualFolderName)
+                ?? throw new FileNotFoundException(
+                    string.Format(CultureInfo.InvariantCulture, "The media collection {0} does not exist", virtualFolderName));
 
             var libraryOptions = CollectionFolder.GetLibraryOptions(virtualFolderPath);
 
@@ -4190,9 +4194,9 @@ namespace Emby.Server.Implementations.Library
 
             var rootFolderPath = _configurationManager.ApplicationPaths.DefaultUserViewsPath;
 
-            var path = Path.Combine(rootFolderPath, name);
+            var path = FileSystemHelper.GetChildPath(rootFolderPath, name);
 
-            if (!Directory.Exists(path))
+            if (path is null || !Directory.Exists(path))
             {
                 throw new FileNotFoundException("The media folder does not exist");
             }
@@ -4256,9 +4260,9 @@ namespace Emby.Server.Implementations.Library
             ArgumentException.ThrowIfNullOrEmpty(mediaPath);
 
             var rootFolderPath = _configurationManager.ApplicationPaths.DefaultUserViewsPath;
-            var virtualFolderPath = Path.Combine(rootFolderPath, virtualFolderName);
+            var virtualFolderPath = FileSystemHelper.GetChildPath(rootFolderPath, virtualFolderName);
 
-            if (!Directory.Exists(virtualFolderPath))
+            if (virtualFolderPath is null || !Directory.Exists(virtualFolderPath))
             {
                 throw new FileNotFoundException(
                     string.Format(CultureInfo.InvariantCulture, "The media collection {0} does not exist", virtualFolderName));
